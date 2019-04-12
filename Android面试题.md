@@ -2,8 +2,8 @@
 
 
 ## Binder机制
- 什么是Binder
-![Binder是什么]($resource/Binder%E6%98%AF%E4%BB%80%E4%B9%88.png)
+### 什么是Binder
+![Binderæ¯ä»ä¹.png](https://github.com/KBiteMan/AndroidSources/blob/master/img/Binder%E6%98%AF%E4%BB%80%E4%B9%88.png?raw=true)
 - 从机制、模型角度讲
   - Binder是一种Android中实现跨进程通信（IPC）的方式，即Binder机制模型
   - 在Android中实现跨进程通信
@@ -12,7 +12,19 @@
   - 连接Service进程、Client进程和ServiceManager进程
 - 从Android代码的实现角度讲
   - Binder是个类，实现了IBinder接口，即Binder类
-  - 将Binder机制模型以代码的形式具体
+  - 将Binder机制模型以代码的形式具体是现在Android中
+
+### 相关基础知识
+Linux相关。
+- 一个进程空间分为**用户空间**&**内核空间**，即把进程内 **用户**&**内核 **隔离开来
+- 二者区别
+  1. 进程间，用户空间的数据==不可共享==，用户空间=不可共享空间
+  2. 进程间，内核空间的数据==可共享==，内核空间=可共享空间
+> ==所有进程共用一个内核空间==
+- 进程内**用户空间**&**内核空间**进行交互，需要通过系统调用，主要通过函数：
+> 1.  copy_from_user（）：将用户空间的数据拷贝到内核空间
+> 2.  copy_to_user（）：将内核空间的数据拷贝到用户空间
+
 
 ## ActivityThread工作原理
 
