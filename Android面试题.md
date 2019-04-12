@@ -33,7 +33,22 @@
 - 跨进程通信（IPC）
   - 进程间需要进行数据交换、通信
 - 跨进程通信基本原理
+![跨进程原理.png](https://github.com/KBiteMan/AndroidSources/blob/master/img/%E8%B7%A8%E8%BF%9B%E7%A8%8B%E5%8E%9F%E7%90%86.png?raw=true)
 
+> 1.而Binder的作用是：连接两个进程，实现mmap()系统调用，主要负责创建数据接收的缓存空间和管理数据接收空间
+> 2.传统的跨进程通信需要拷贝数据2次，但Binder机制只需1次，主要使用到了内存映射
+
+#### 内存映射
+
+### Binder跨进程通信机制——模型
+该模型基于C\S模式（Client-Service）
+
+| 角色      | 作用    |  备注 |
+| :-------: | :--------: | -----: |
+| Client进程| 使用服务的进程 | APP |
+| Service进程| 提供服务的基础|   服务器端 |
+| ServiceManager进程| 管理Service注册与查询（将字符形式的Binder名字，转化成Client中对该Binder的引用） |   类似路由器|
+| Binder驱动 |一种虚拟设备驱动，是连接Service进程、Client进行和ServiceManager的桥梁，具体作用为：</br>1.传递跨进程的数据：通过内存映射</br>2.实现线程控制：采用Binder线程池，并由Binder驱动自身进行管理|Binder驱动持有每个Server进程在内核空间中的Binder实体，并给Client进程提供Binder实体的引用|
 
 ## ActivityThread工作原理
 
