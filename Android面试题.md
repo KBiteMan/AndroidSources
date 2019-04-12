@@ -42,9 +42,10 @@
 
 ### Binder跨进程通信机制——模型
 该模型基于C\S模式（Client-Service）
+![C\S模型原理.png](https://github.com/KBiteMan/AndroidSources/blob/master/img/C%5CS%E6%A8%A1%E5%9E%8B%E5%8E%9F%E7%90%86.png?raw=true)
 
 | 角色      | 作用    |  备注 |
-| :-------: | :--------: | -----: |
+| :-------: | :-------- | -----: |
 | Client进程| 使用服务的进程 | APP |
 | Service进程| 提供服务的基础|   服务器端 |
 | ServiceManager进程| 管理Service注册与查询（将字符形式的Binder名字，转化成Client中对该Binder的引用） |   类似路由器|
