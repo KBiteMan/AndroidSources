@@ -45,11 +45,16 @@
 ![C\S模型原理.png](https://github.com/KBiteMan/AndroidSources/blob/master/img/C%5CS%E6%A8%A1%E5%9E%8B%E5%8E%9F%E7%90%86.png?raw=true)
 
 | 角色      | 作用    |  备注 |
-| :-------: | :-------- | -----: |
+| :-------: | :-------- | ----- |
 | Client进程| 使用服务的进程 | APP |
 | Service进程| 提供服务的基础|   服务器端 |
 | ServiceManager进程| 管理Service注册与查询（将字符形式的Binder名字，转化成Client中对该Binder的引用） |   类似路由器|
 | Binder驱动 |一种虚拟设备驱动，是连接Service进程、Client进行和ServiceManager的桥梁，具体作用为：</br>1.传递跨进程的数据：通过内存映射</br>2.实现线程控制：采用Binder线程池，并由Binder驱动自身进行管理|Binder驱动持有每个Server进程在内核空间中的Binder实体，并给Client进程提供Binder实体的引用|
+
+### Binder驱动的作用&原理
+作用：连接Service进程、Client进程和ServiceManager桥梁
+原理：内存映射，即内部调用mmap（）函数
+实际用途：1.创建数据接收的缓存空间；2.地址映射
 
 ## ActivityThread工作原理
 
