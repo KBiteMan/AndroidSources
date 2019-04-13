@@ -56,6 +56,8 @@
 原理：内存映射，即内部调用mmap（）函数
 实际用途：1.创建数据接收的缓存空间；2.地址映射
 
+![.png](https://github.com/KBiteMan/AndroidSources/blob/master/img/944365-65a5b17426aed424.png?raw=true)
+
 ## ActivityThread工作原理
 
 ## Activity的启动流程
