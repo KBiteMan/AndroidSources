@@ -3,7 +3,7 @@
 
 ## Binder机制
 ### 什么是Binder
-![Binderæ¯ä»ä¹.png](https://github.com/KBiteMan/AndroidSources/blob/master/img/Binder%E6%98%AF%E4%BB%80%E4%B9%88.png?raw=true)
+![Binder机制.png](https://github.com/KBiteMan/AndroidSources/blob/master/img/Binder%E6%98%AF%E4%BB%80%E4%B9%88.png?raw=true)
 - 从机制、模型角度讲
   - Binder是一种Android中实现跨进程通信（IPC）的方式，即Binder机制模型
   - 在Android中实现跨进程通信
@@ -16,7 +16,7 @@
 
 ### 相关基础知识
 #### 进程空间划分
-- 一个进程空间分为**用户空间**&**内核空间**，即把进程内 **用户**&**内核 **隔离开来
+- 一个进程空间分为**用户空间**&**内核空间**，即把进程内 **用户**&**内核**隔离开来
 - 二者区别
   1. 进程间，用户空间的数据==不可共享==，用户空间=不可共享空间
   2. 进程间，内核空间的数据==可共享==，内核空间=可共享空间
@@ -62,6 +62,49 @@
 
 
 ## ActivityThread工作原理
+main方法：
+```java
+public static void main(String[] args) {
+    Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "ActivityThreadMain");    
+    // CloseGuard defaults to true and can be quite spammy.  We
+    // disable it here, but selectively enable it later (via 
+    // StrictMode) on debug builds, but using DropBox, not logs.
+    CloseGuard.setEnabled(false);    
+    Environment.initForCurrentUser();    
+    // Set the reporter for event logging in libcore
+    EventLogger.setReporter(new EventLoggingReporter());    
+    // Make sure TrustedCertificateStore looks in the right place for CA certificates
+    final File configDir = Environment.getUserConfigDirectory(UserHandle.myUserId());
+    TrustedCertificateStore.setDefaultUserDirectory(configDir);    
+    Process.setArgV0("<pre-initialized>");    
+    Looper.prepareMainLooper();    
+    // Find the value for {@link #PROC_START_SEQ_IDENT} if provided on the command line.
+    // It will be in the format "seq=114"  long startSeq = 0;
+    if (args != null) {
+        for (int i = args.length - 1; i >= 0; --i) {
+            if (args[i] != null && args[i].startsWith(PROC_START_SEQ_IDENT)) {
+                startSeq = Long.parseLong(
+                        args[i].substring(PROC_START_SEQ_IDENT.length()));
+            }
+        }
+    }
+    ActivityThread thread = new ActivityThread();
+    thread.attach(false, startSeq);   if (sMainThreadHandler == null) {
+        sMainThreadHandler = thread.getHandler();
+    }
+
+    if (false) {
+        Looper.myLooper().setMessageLogging(new
+        LogPrinter(Log.DEBUG, "ActivityThread"));
+    }
+
+    // End of event ActivityThreadMain.
+    Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
+    Looper.loop();   
+    throw new RuntimeException("Main thread loop unexpectedly exited"); 
+}
+```
+
 
 ## Activity的启动流程
 
@@ -83,6 +126,45 @@
 
 ## 线程池
 
+## 进程管理机制
+
+## 进程保活
+进程的优先级是什么？
+分**黑、白、灰**三种手段保活
+- 黑：不同App进程，用广播相互唤醒
+- 白：启动前台Service
+- 灰：利用系统的漏洞启动前台Service
+
+### 黑色保活
+- 场景1：开机，网络切换、拍照、拍视频时候，利用系统产生的广播唤醒app
+- 场景2：接入第三方SDK也会唤醒相应的app进程，如微信sdk会唤醒微信，支付宝sdk会唤醒支付宝。由此发散开去，就会直接触发了下面的 场景3
+- 场景3：假如你手机里装了支付宝、淘宝、天猫、UC等阿里系的app，那么你打开任意一个阿里系的app后，有可能就顺便把其他阿里系的app给唤醒了。（只是拿阿里打个比方，其实BAT系都差不多）
+### 白色保活
+白色保活手段非常简单，就是调用系统api启动一个前台的Service进程，这样会在系统的通知栏生成一个Notification，用来让用户知道有这样一个app在运行着，哪怕当前的app退到了后台。如下方的LBE和QQ音乐这样。
+### 灰色保活
+灰色保活，这种保活手段是应用范围最广泛。它是利用系统的漏洞来启动一个前台的Service进程，与普通的启动方式区别在于，它不会在系统通知栏处出现一个Notification，看起来就如同运行着一个后台Service进程一样。这样做带来的好处就是，用户无法察觉到你运行着一个前台进程（因为看不到Notification）,但你的进程优先级又是高于普通后台进程的。那么如何利用系统的漏洞呢，大致的实现思路和代码如下：
+- 思路一：API < 18，启动前台Service时直接传入new Notification()；
+- 思路二：API >= 18，同时启动两个id相同的前台Service，然后再将后启动的Service做stop处理
+
+系统出于体验和性能上的考虑，app在退到后台时系统并不会真正的kill掉这个进程，而是将其缓存起来。打开的应用越多，后台缓存的进程也越多。在系统内存不足的情况下，系统开始依据自身的一套进程回收机制来判断要kill掉哪些进程，以腾出内存来供给需要的app。这套杀进程回收内存的机制就叫 Low Memory Killer ，它是基于Linux内核的 OOM Killer（Out-Of-Memory killer）机制诞生。
+
+进程的重要性，划分5级：
+- 前台进程 (Foreground process)
+- 可见进程 (Visible process)
+- 服务进程 (Service process)
+- 后台进程 (Background process)
+- 空进程 (Empty process)
+
+了解完 Low Memory Killer，再科普一下oom_adj。什么是oom_adj？它是linux内核分配给每个系统进程的一个值，代表进程的优先级，进程回收机制就是根据这个优先级来决定是否进行回收。对于oom_adj的作用，你只需要记住以下几点即可：
+
+进程的oom_adj越大，表示此进程优先级越低，越容易被杀回收；越小，表示进程优先级越高，越不容易被杀回收
+
+普通app进程的oom_adj>=0,系统进程的oom_adj才可能<0
+
+有些手机厂商把这些知名的app放入了自己的白名单中，保证了进程不死来提高用户体验（如微信、QQ、陌陌都在小米的白名单中）。如果从白名单中移除，他们终究还是和普通app一样躲避不了被杀的命运，为了尽量避免被杀，还是老老实实去做好优化工作吧。
+
+所以，进程保活的根本方案终究还是回到了性能优化上，进程永生不死终究是个彻头彻尾的伪命题！
+
 ## ThreadLocal
 
 ## Synchronized原理
@@ -94,10 +176,6 @@
 ## AsyncTask源码分析
 
 ## HashMap原理，Hash碰撞，自动扩容
-
-## Retrofit源码分析
-
-## Glide缓存源码，加载原理
 
 ## 常用设计模式以及使用场景
 
@@ -133,6 +211,8 @@
 ## Java中反射、注解的理解
 
 ## LruCache
+原理
+双向链表
 
 ## 小程序实现原理
 
